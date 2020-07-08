@@ -11,6 +11,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"flag"
+	"fmt"
 	"log"
 	"math/big"
 	"os"
@@ -48,12 +49,27 @@ func main() {
 		log.Fatal("You must specify -server or -client!")
 	}
 
+	// Compute validity dates
+	if years + months + days + hours == 0 {
+		if server {
+			// Default server cert lifespan
+			years = 5
+		} else {
+			// Default server cert lifespan
+			days =1
+		}
+	}
+	notBefore := time.Now()
+	notAfter := notBefore.AddDate(years, months, days)
+	hoursDuration, _ := time.ParseDuration(fmt.Sprintf("%dh", hours))
+	notAfter = notAfter.Add(hoursDuration)
+
 	// Build certificate template
 	var template x509.Certificate
 	if server {
-		template = getServerCertTemplate(domain, years, months, days, hours)
+		template = getServerCertTemplate(domain, notBefore, notAfter)
 	} else {
-		template = getClientCertTemplate(cn, years, months, days, hours)
+		template = getClientCertTemplate(cn, notBefore, notAfter)
 	}
 
 	// Generate keys, sign cert and write everything to disk
@@ -64,15 +80,15 @@ func main() {
 	}
 }
 
-func getServerCertTemplate(domain string, years int, months int, days int, hours int) x509.Certificate {
-	return getCommonCertTemplate()
+func getServerCertTemplate(domain string, notBefore time.Time, notAfter time.Time) x509.Certificate {
+	return getCommonCertTemplate(notBefore, notAfter)
 }
 
-func getClientCertTemplate(commonName string, years int, months int, days int, hours int) x509.Certificate {
-	return getCommonCertTemplate()
+func getClientCertTemplate(domain string, notBefore time.Time, notAfter time.Time) x509.Certificate {
+	return getCommonCertTemplate(notBefore, notAfter)
 }
 
-func getCommonCertTemplate() x509.Certificate {
+func getCommonCertTemplate(notBefore time.Time, notAfter time.Time) x509.Certificate {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
@@ -83,8 +99,8 @@ func getCommonCertTemplate() x509.Certificate {
 		Subject: pkix.Name{
 			Organization: []string{"Acme Co"},
 		},
-		NotBefore: time.Now(),
-		NotAfter:  time.Now(),
+		NotBefore: notBefore,
+		NotAfter:  notAfter,
 	}
 	return template
 }
