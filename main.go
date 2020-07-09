@@ -81,7 +81,13 @@ func main() {
 }
 
 func getServerCertTemplate(domain string, notBefore time.Time, notAfter time.Time) x509.Certificate {
-	return getCommonCertTemplate(notBefore, notAfter)
+		wildcard := "*." + domain
+		template := getCommonCertTemplate(notBefore, notAfter)
+		template.Subject = pkix.Name{
+			CommonName: wildcard,
+		}
+		template.DNSNames = append(template.DNSNames, wildcard)
+		return template
 }
 
 func getClientCertTemplate(domain string, notBefore time.Time, notAfter time.Time) x509.Certificate {
@@ -96,9 +102,6 @@ func getCommonCertTemplate(notBefore time.Time, notAfter time.Time) x509.Certifi
 	}
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
-		Subject: pkix.Name{
-			Organization: []string{"Acme Co"},
-		},
 		NotBefore: notBefore,
 		NotAfter:  notAfter,
 	}
