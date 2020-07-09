@@ -50,13 +50,13 @@ func main() {
 	}
 
 	// Compute validity dates
-	if years + months + days + hours == 0 {
+	if years+months+days+hours == 0 {
 		if server {
 			// Default server cert lifespan
 			years = 5
 		} else {
 			// Default server cert lifespan
-			days =1
+			days = 1
 		}
 	}
 	notBefore := time.Now()
@@ -81,13 +81,13 @@ func main() {
 }
 
 func getServerCertTemplate(domain string, notBefore time.Time, notAfter time.Time) x509.Certificate {
-		wildcard := "*." + domain
-		template := getCommonCertTemplate(notBefore, notAfter)
-		template.Subject = pkix.Name{
-			CommonName: wildcard,
-		}
-		template.DNSNames = append(template.DNSNames, wildcard)
-		return template
+	wildcard := "*." + domain
+	template := getCommonCertTemplate(notBefore, notAfter)
+	template.Subject = pkix.Name{
+		CommonName: wildcard,
+	}
+	template.DNSNames = append(template.DNSNames, wildcard)
+	return template
 }
 
 func getClientCertTemplate(cn string, notBefore time.Time, notAfter time.Time) x509.Certificate {
@@ -106,8 +106,8 @@ func getCommonCertTemplate(notBefore time.Time, notAfter time.Time) x509.Certifi
 	}
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
-		NotBefore: notBefore,
-		NotAfter:  notAfter,
+		NotBefore:    notBefore,
+		NotAfter:     notAfter,
 	}
 	return template
 }
