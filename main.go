@@ -90,8 +90,12 @@ func getServerCertTemplate(domain string, notBefore time.Time, notAfter time.Tim
 		return template
 }
 
-func getClientCertTemplate(domain string, notBefore time.Time, notAfter time.Time) x509.Certificate {
-	return getCommonCertTemplate(notBefore, notAfter)
+func getClientCertTemplate(cn string, notBefore time.Time, notAfter time.Time) x509.Certificate {
+	template := getCommonCertTemplate(notBefore, notAfter)
+	template.Subject = pkix.Name{
+		CommonName: cn,
+	}
+	return template
 }
 
 func getCommonCertTemplate(notBefore time.Time, notAfter time.Time) x509.Certificate {
