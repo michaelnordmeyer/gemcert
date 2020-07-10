@@ -81,11 +81,12 @@ func main() {
 }
 
 func getServerCertTemplate(domain string, notBefore time.Time, notAfter time.Time) x509.Certificate {
-	wildcard := "*." + domain
 	template := getCommonCertTemplate(notBefore, notAfter)
 	template.Subject = pkix.Name{
-		CommonName: wildcard,
+		CommonName: domain,
 	}
+	wildcard := "*." + domain
+	template.DNSNames = append(template.DNSNames, domain)
 	template.DNSNames = append(template.DNSNames, wildcard)
 	return template
 }
