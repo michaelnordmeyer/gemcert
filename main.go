@@ -35,7 +35,7 @@ func main() {
 	flag.BoolVar(&server, "server", false, "generate a server certificate.")
 	flag.BoolVar(&ed25519, "ed25519", false, "use ed25519 instead of ECDSA.")
 	flag.StringVar(&domain, "domain", "example.com", "server domain.")
-	flag.StringVar(&cn, "cn", "cn", "client certificate CN.")
+	flag.StringVar(&cn, "cn", "gemini", "client certificate CN.")
 	flag.IntVar(&years, "years", 0, "years of validity.")
 	flag.IntVar(&months, "months", 0, "months of validity.")
 	flag.IntVar(&days, "days", 0, "days of validity.")
