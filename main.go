@@ -23,7 +23,7 @@ func main() {
 	// Parse command line arguments
 	var client bool
 	var server bool
-	var algo string
+	var ed25519 bool
 	var domain string
 	var cn string
 	var years int
@@ -33,7 +33,7 @@ func main() {
 
 	flag.BoolVar(&client, "client", false, "generate a client certificate.")
 	flag.BoolVar(&server, "server", false, "generate a server certificate.")
-	flag.StringVar(&algo, "algo", "ecdsa", "crypto algorithm - ecdsa or ed25519.")
+	flag.BoolVar(&ed25519, "ed25519", false, "use ed25519 instead of ECDSA.")
 	flag.StringVar(&domain, "domain", "example.com", "server domain.")
 	flag.StringVar(&cn, "cn", "cn", "client certificate CN.")
 	flag.IntVar(&years, "years", 0, "years of validity.")
@@ -73,10 +73,10 @@ func main() {
 	}
 
 	// Generate keys, sign cert and write everything to disk
-	if algo == "ecdsa" {
-		writeEcdsaKeyAndCertFromTemplate(template)
-	} else if algo == "ed25519" {
+	if ed25519 {
 		writeEd25519KeyAndCertFromTemplate(template)
+	} else {
+		writeEcdsaKeyAndCertFromTemplate(template)
 	}
 }
 
