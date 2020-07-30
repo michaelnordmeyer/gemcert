@@ -7,8 +7,10 @@ import (
 	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/hex"
 	"encoding/pem"
 	"flag"
 	"fmt"
@@ -74,9 +76,9 @@ func main() {
 
 	// Generate keys, sign cert and write everything to disk
 	if ed25519 {
-		writeEd25519KeyAndCertFromTemplate(template)
+		generateEd25519KeyAndCertFromTemplate(template, server)
 	} else {
-		writeEcdsaKeyAndCertFromTemplate(template)
+		generateEcdsaKeyAndCertFromTemplate(template, server)
 	}
 }
 
@@ -113,7 +115,7 @@ func getCommonCertTemplate(notBefore time.Time, notAfter time.Time) x509.Certifi
 	return template
 }
 
-func writeEcdsaKeyAndCertFromTemplate(template x509.Certificate) {
+func generateEcdsaKeyAndCertFromTemplate(template x509.Certificate, isServer bool) {
 	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		log.Fatal(err)
@@ -122,10 +124,10 @@ func writeEcdsaKeyAndCertFromTemplate(template x509.Certificate) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	writeToPem(priv, cert)
+	writeAndPrint(priv, cert, isServer)
 }
 
-func writeEd25519KeyAndCertFromTemplate(template x509.Certificate) {
+func generateEd25519KeyAndCertFromTemplate(template x509.Certificate, isServer bool) {
 	var pub ed25519.PublicKey
 	pub, priv, err := ed25519.GenerateKey(nil)
 	if err != nil {
@@ -135,10 +137,12 @@ func writeEd25519KeyAndCertFromTemplate(template x509.Certificate) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	writeToPem(priv, cert)
+	writeAndPrint(priv, cert, isServer)
 }
 
-func writeToPem(privkey interface{}, cert []byte) {
+func writeAndPrint(privkey interface{}, cert []byte, isServer bool) {
+	isClient := !isServer
+
 	// Write cert
 	certOut, err := os.Create("cert.pem")
 	if err != nil {
@@ -169,4 +173,11 @@ func writeToPem(privkey interface{}, cert []byte) {
 		log.Fatalf("Error closing key.pem: %v", err)
 	}
 	log.Print("wrote key.pem\n")
+
+	// Print fingerprint of client certs
+	if isClient {
+		hash := sha256.Sum256(cert)
+		fingerprint := hex.EncodeToString(hash[:])
+		log.Printf("Certificate fingerprint (SHA256): " + fingerprint)
+	}
 }
