@@ -142,24 +142,35 @@ func generateEd25519KeyAndCertFromTemplate(template x509.Certificate, isServer b
 
 func writeAndPrint(privkey interface{}, cert []byte, isServer bool) {
 	isClient := !isServer
+	parsedCert, _ := x509.ParseCertificate(cert)
+
+	// Derive filenames from domain for server certs
+	var certFilename, keyFilename string
+	if isServer {
+		certFilename = parsedCert.Subject.CommonName + ".crt"
+		keyFilename = parsedCert.Subject.CommonName + ".key"
+	} else {
+		certFilename = "cert.pem"
+		keyFilename = "key.pem"
+	}
 
 	// Write cert
-	certOut, err := os.Create("cert.pem")
+	certOut, err := os.Create(certFilename)
 	if err != nil {
-		log.Fatalf("Failed to open cert.pem for writing: %v", err)
+		log.Fatalf("Failed to open certificate file for writing: %v", err)
 	}
 	if err := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: cert}); err != nil {
-		log.Fatalf("Failed to write data to cert.pem: %v", err)
+		log.Fatalf("Failed to write data to certificate file: %v", err)
 	}
 	if err := certOut.Close(); err != nil {
-		log.Fatalf("Error closing cert.pem: %v", err)
+		log.Fatalf("Error closing certificate file: %v", err)
 	}
-	log.Print("wrote cert.pem\n")
+	log.Printf("wrote %s\n", certFilename)
 
 	// Write key
-	keyOut, err := os.OpenFile("key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	keyOut, err := os.OpenFile(keyFilename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
-		log.Fatalf("Failed to open key.pem for writing: %v", err)
+		log.Fatalf("Failed to open key file for writing: %v", err)
 		return
 	}
 	privBytes, err := x509.MarshalPKCS8PrivateKey(privkey)
@@ -167,12 +178,12 @@ func writeAndPrint(privkey interface{}, cert []byte, isServer bool) {
 		log.Fatalf("Unable to marshal private key: %v", err)
 	}
 	if err := pem.Encode(keyOut, &pem.Block{Type: "PRIVATE KEY", Bytes: privBytes}); err != nil {
-		log.Fatalf("Failed to write data to key.pem: %v", err)
+		log.Fatalf("Failed to write data to key file: %v", err)
 	}
 	if err := keyOut.Close(); err != nil {
-		log.Fatalf("Error closing key.pem: %v", err)
+		log.Fatalf("Error closing key file: %v", err)
 	}
-	log.Print("wrote key.pem\n")
+	log.Printf("wrote %s\n", keyFilename)
 
 	// Print fingerprint of client certs
 	if isClient {
