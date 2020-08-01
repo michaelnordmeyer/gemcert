@@ -59,7 +59,7 @@ func main() {
 			// Default server cert lifespan
 			years = 5
 		} else {
-			// Default server cert lifespan
+			// Default client cert lifespan
 			days = 1
 		}
 	}
