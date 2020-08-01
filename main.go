@@ -26,6 +26,7 @@ func main() {
 	var client bool
 	var server bool
 	var ed25519 bool
+	var nowild bool
 	var domain string
 	var cn string
 	var years int
@@ -36,6 +37,7 @@ func main() {
 	flag.BoolVar(&client, "client", false, "generate a client certificate.")
 	flag.BoolVar(&server, "server", false, "generate a server certificate.")
 	flag.BoolVar(&ed25519, "ed25519", false, "use ed25519 instead of ECDSA.")
+	flag.BoolVar(&nowild, "nowild", false, "do not include a wildcard entry in SAN.")
 	flag.StringVar(&domain, "domain", "example.com", "server domain.")
 	flag.StringVar(&cn, "cn", "gemini", "client certificate CN.")
 	flag.IntVar(&years, "years", 0, "years of validity.")
@@ -69,7 +71,7 @@ func main() {
 	// Build certificate template
 	var template x509.Certificate
 	if server {
-		template = getServerCertTemplate(domain, notBefore, notAfter)
+		template = getServerCertTemplate(domain, !nowild, notBefore, notAfter)
 	} else {
 		template = getClientCertTemplate(cn, notBefore, notAfter)
 	}
@@ -82,14 +84,16 @@ func main() {
 	}
 }
 
-func getServerCertTemplate(domain string, notBefore time.Time, notAfter time.Time) x509.Certificate {
+func getServerCertTemplate(domain string, wildcard bool, notBefore time.Time, notAfter time.Time) x509.Certificate {
 	template := getCommonCertTemplate(notBefore, notAfter)
 	template.Subject = pkix.Name{
 		CommonName: domain,
 	}
-	wildcard := "*." + domain
 	template.DNSNames = append(template.DNSNames, domain)
-	template.DNSNames = append(template.DNSNames, wildcard)
+	if wildcard {
+		wildcard := "*." + domain
+		template.DNSNames = append(template.DNSNames, wildcard)
+	}
 	return template
 }
 
