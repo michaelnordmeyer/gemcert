@@ -26,6 +26,7 @@ func main() {
 	var client bool
 	var server bool
 	var ed25519 bool
+	var der bool
 	var nowild bool
 	var domain string
 	var cn string
@@ -37,6 +38,7 @@ func main() {
 	flag.BoolVar(&client, "client", false, "generate a client certificate.")
 	flag.BoolVar(&server, "server", false, "generate a server certificate.")
 	flag.BoolVar(&ed25519, "ed25519", false, "use ed25519 instead of ECDSA.")
+	flag.BoolVar(&der, "der", false, "use DER instead of PEM.")
 	flag.BoolVar(&nowild, "nowild", false, "do not include a wildcard entry in SAN.")
 	flag.StringVar(&domain, "domain", "example.com", "server domain.")
 	flag.StringVar(&cn, "cn", "gemini", "client certificate CN.")
@@ -78,9 +80,9 @@ func main() {
 
 	// Generate keys, sign cert and write everything to disk
 	if ed25519 {
-		generateEd25519KeyAndCertFromTemplate(template, server)
+		generateEd25519KeyAndCertFromTemplate(template, server, der)
 	} else {
-		generateEcdsaKeyAndCertFromTemplate(template, server)
+		generateEcdsaKeyAndCertFromTemplate(template, server, der)
 	}
 }
 
@@ -119,7 +121,7 @@ func getCommonCertTemplate(notBefore time.Time, notAfter time.Time) x509.Certifi
 	return template
 }
 
-func generateEcdsaKeyAndCertFromTemplate(template x509.Certificate, isServer bool) {
+func generateEcdsaKeyAndCertFromTemplate(template x509.Certificate, isServer bool, der bool) {
 	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		log.Fatal(err)
@@ -128,10 +130,10 @@ func generateEcdsaKeyAndCertFromTemplate(template x509.Certificate, isServer boo
 	if err != nil {
 		log.Fatal(err)
 	}
-	writeAndPrint(priv, cert, isServer)
+	writeAndPrint(priv, cert, isServer, der)
 }
 
-func generateEd25519KeyAndCertFromTemplate(template x509.Certificate, isServer bool) {
+func generateEd25519KeyAndCertFromTemplate(template x509.Certificate, isServer bool, der bool) {
 	var pub ed25519.PublicKey
 	pub, priv, err := ed25519.GenerateKey(nil)
 	if err != nil {
@@ -141,10 +143,10 @@ func generateEd25519KeyAndCertFromTemplate(template x509.Certificate, isServer b
 	if err != nil {
 		log.Fatal(err)
 	}
-	writeAndPrint(priv, cert, isServer)
+	writeAndPrint(priv, cert, isServer, der)
 }
 
-func writeAndPrint(privkey interface{}, cert []byte, isServer bool) {
+func writeAndPrint(privkey interface{}, cert []byte, isServer bool, der bool) {
 	isClient := !isServer
 	parsedCert, _ := x509.ParseCertificate(cert)
 
@@ -154,8 +156,13 @@ func writeAndPrint(privkey interface{}, cert []byte, isServer bool) {
 		certFilename = parsedCert.Subject.CommonName + ".crt"
 		keyFilename = parsedCert.Subject.CommonName + ".key"
 	} else {
-		certFilename = "cert.pem"
-		keyFilename = "key.pem"
+		if der {
+			certFilename = "cert.der"
+			keyFilename = "key.der"
+		} else {
+			certFilename = "cert.pem"
+			keyFilename = "key.pem"
+		}
 	}
 
 	// Write cert
@@ -163,8 +170,14 @@ func writeAndPrint(privkey interface{}, cert []byte, isServer bool) {
 	if err != nil {
 		log.Fatalf("Failed to open certificate file for writing: %v", err)
 	}
-	if err := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: cert}); err != nil {
-		log.Fatalf("Failed to write data to certificate file: %v", err)
+	if der {
+		if _, err := certOut.Write(cert); err != nil {
+			log.Fatalf("Failed to write data to certificate file: %v", err)
+		}
+	} else {
+		if err := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: cert}); err != nil {
+			log.Fatalf("Failed to write data to certificate file: %v", err)
+		}
 	}
 	if err := certOut.Close(); err != nil {
 		log.Fatalf("Error closing certificate file: %v", err)
@@ -181,8 +194,14 @@ func writeAndPrint(privkey interface{}, cert []byte, isServer bool) {
 	if err != nil {
 		log.Fatalf("Unable to marshal private key: %v", err)
 	}
-	if err := pem.Encode(keyOut, &pem.Block{Type: "PRIVATE KEY", Bytes: privBytes}); err != nil {
-		log.Fatalf("Failed to write data to key file: %v", err)
+	if der {
+	  if _, err := keyOut.Write(privBytes); err != nil {
+			log.Fatalf("Failed to write data to key file: %v", err)
+		}
+	} else {
+	  if err := pem.Encode(keyOut, &pem.Block{Type: "PRIVATE KEY", Bytes: privBytes}); err != nil {
+			log.Fatalf("Failed to write data to key file: %v", err)
+		}
 	}
 	if err := keyOut.Close(); err != nil {
 		log.Fatalf("Error closing key file: %v", err)

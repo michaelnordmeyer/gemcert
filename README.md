@@ -10,14 +10,14 @@ self-signed certificate.  It does just what is needed for typical Gemini server
 or client certificates with sensible defaults and a handful of straightforward
 options for extra control.
 
-# Usage
+## Usage
 
-## Server certificates
+### Server certificates
 
 Use the following command to generate a self-signed certificate to use with a
 Gemini server:
 
-```
+```sh
 gemcert --server --domain example.com
 ```
 
@@ -29,18 +29,18 @@ should be avoided wherever possible, so it's better to remain flexible at the
 outset - you might have no plans to use subdomains right now, but are you sure
 you won't change your mind next year?  Oh, you are?  Then you can use:
 
-```
+```sh
 gemcert --server --nowild --domain example.com
 ```
 
 To get a certificate valid only for `example.com`.
 
-## Client certificates
+### Client certificates
 
 Use the following command to generate a self-signed certificate to use as a
 client certificate:
 
-```
+```sh
 gemcert --client
 ```
 
@@ -55,12 +55,12 @@ Some applications (e.g. astrobotany) use your client cert's Subject CN as a
 username in the application.  You can use the `-cn` option to specify your
 own Subject CN in certs destined for use with such an application:
 
-```
+```sh
 gemcert --client --cn username
 gemcert --client --cn "Gus Grissom"
 ```
 
-## Certificate lifetimes
+### Certificate lifetimes
 
 The validity period of a certificate always begins at the time it was generated.
 By default, server certificates are valid for 5 years beyond that time, and
@@ -72,7 +72,7 @@ combination of the `--years`, `--months`, `--days` and `--hours` options:
 gemcert --server --domain example.com --years 3 --months 6 --days 12 --hours 4
 ```
 
-## Key types
+### Key types
 
 By default, gemcert produces keys for the ECDSA signature scheme, using the P256
 NIST curve.  The resulting certificates are much smaller than the RSA
@@ -84,7 +84,7 @@ size and broad compatibility.
 As a single alternative, gemcert can also produce keys for the ED25519
 signature scheme, via the `--ed25519` option:
 
-```
+```sh
 gemcert --server --ed25519 --domain example.com
 ```
 
@@ -98,11 +98,19 @@ Hopefully this situation will change in the near future.  For the time being,
 these certs are still useful for use as client certificates if your own client
 and a particular application server you want to use both support ED25519.
 
-## Output files
+### Output files
 
 Server certificate and key files will be written to files with names derived
 from the domain, e.g. `example.com.crt` and `example.com.key`.  Client
-certificates are written instead to `key.pem` and `cert.pem` (an ugly
-inconsistency which is not long for this world).  Either way, the files will
-be written to the current working directory, will be in PEM format, and gemcert
-will not ask before overwriting existing files, so use with caution!
+certificates are written instead to `key.pem` and `cert.pem`, or `key.der` and
+`cert.der` (an ugly inconsistency which is not long for this world).  Either
+way, the files will be written to the current working directory, will be in PEM
+(plain text) or DER (binary) format, and gemcert will not ask before overwriting
+existing files, so use with caution!
+
+DER certificates are smaller than PEMs and can be created with the `--der`
+option:
+
+```sh
+gemcert --server --ed25519 --der --domain example.com
+```
