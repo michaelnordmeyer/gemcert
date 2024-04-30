@@ -55,17 +55,22 @@ func main() {
 		log.Fatal("You must specify -server or -client!")
 	}
 
+	notBefore := time.Now()
 	// Compute validity dates
 	if years+months+days+hours == 0 {
 		if server {
 			// Default server cert lifespan
-			years = 5
+			years = 1000
+			gemini3_launch_date, err := time.Parse(time.RFC3339, "1965-03-23T14:24:00+00:00")
+			if err != nil {
+				log.Fatalf("Error parsing Gemini 3 launch date: %v", err)
+			}
+			notBefore = gemini3_launch_date
 		} else {
 			// Default client cert lifespan
 			days = 1
 		}
 	}
-	notBefore := time.Now()
 	notAfter := notBefore.AddDate(years, months, days)
 	hoursDuration, _ := time.ParseDuration(fmt.Sprintf("%dh", hours))
 	notAfter = notAfter.Add(hoursDuration)

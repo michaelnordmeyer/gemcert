@@ -62,14 +62,22 @@ gemcert --client --cn "Gus Grissom"
 
 ### Certificate lifetimes
 
-The validity period of a certificate always begins at the time it was generated.
-By default, server certificates are valid for 5 years beyond that time, and
-client certificates for 1 day.  No matter which certificate type you are
-creating, you can easily specify the validity lifetime you would like using any
-combination of the `--years`, `--months`, `--days` and `--hours` options:
+By default, the validity period of a server certificate begins on
+1965-03-23 14:24:00 UTC, the point in time Gemini 3 was launched, the first
+crewed mission in NASA's Project Gemini, which was the first time two American
+astronauts flew together into space, and are valid for 1000 years beyond that
+time.
 
-```
-gemcert --server --domain example.com --years 3 --months 6 --days 12 --hours 4
+The validity period of a client certificate begins at the time it was generated
+and is valid for 1 day.
+
+No matter which certificate type you are creating, you can easily specify the
+validity lifetime you would like using any combination of the `--years`,
+`--months`, `--days` and `--hours` options, with the beginning of the validity
+period at the time is was generated:
+
+```sh
+gemcert --server --domain example.com --years 2 --months 4 --days 8 --hours 16
 ```
 
 ### Key types
